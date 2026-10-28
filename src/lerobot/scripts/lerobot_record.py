@@ -426,15 +426,15 @@ def record_loop(
             _sent_action = robot.send_action(robot_action_to_send)
 
             # Write to dataset
-            # if dataset is not None:
-            #     action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
-            #     frame = {**observation_frame, **action_frame, "task": single_task}
-            #     dataset.add_frame(frame)
+            if dataset is not None:
+                action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
+                frame = {**observation_frame, **action_frame, "task": single_task}
+                dataset.add_frame(frame)
 
-            # if display_data:
-            #     log_rerun_data(
-            #         observation=obs_processed, action=action_values, compress_images=display_compressed_images
-            #     )
+            if display_data:
+                log_rerun_data(
+                    observation=obs_processed, action=action_values, compress_images=display_compressed_images
+                )
 
             dt_s = time.perf_counter() - start_loop_t
 

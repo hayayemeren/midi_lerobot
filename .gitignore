@@ -177,3 +177,7 @@ outputs/
 *.urdf
 *.xml
 *.part
+
+.antigravitycli/
+*.log
+inference_outputs/

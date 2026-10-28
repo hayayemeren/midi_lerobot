@@ -78,6 +78,9 @@ def log_rerun_data(
             if v is None:
                 continue
             key = k if str(k).startswith(OBS_PREFIX) else f"{OBS_STR}.{k}"
+            
+            if hasattr(v, "detach"):
+                v = v.detach().cpu().numpy()
 
             if _is_scalar(v):
                 rr.log(key, rr.Scalars(float(v)))
@@ -91,13 +94,16 @@ def log_rerun_data(
                         rr.log(f"{key}_{i}", rr.Scalars(float(vi)))
                 else:
                     img_entity = rr.Image(arr).compress() if compress_images else rr.Image(arr)
-                    rr.log(key, entity=img_entity, static=True)
+                    rr.log(key, entity=img_entity)
 
     if action:
         for k, v in action.items():
             if v is None:
                 continue
             key = k if str(k).startswith(ACTION_PREFIX) else f"{ACTION}.{k}"
+            
+            if hasattr(v, "detach"):
+                v = v.detach().cpu().numpy()
 
             if _is_scalar(v):
                 rr.log(key, rr.Scalars(float(v)))

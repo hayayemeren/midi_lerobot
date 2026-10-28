@@ -47,16 +47,16 @@ from lerobot.utils.visualization_utils import init_rerun
 NUM_EPISODES = 5
 FPS = 30
 EPISODE_TIME_SEC = 60
-TASK_DESCRIPTION = "My task description"
-HF_MODEL_ID = "<hf_username>/<model_repo_id>"
-HF_DATASET_ID = "<hf_username>/<dataset_repo_id>"
+TASK_DESCRIPTION = "Towel folding demo"
+HF_MODEL_ID = "maksimgorki/m_fold_cloth_twice_50hz_with_variance"
+HF_DATASET_ID = "maksimgorki/model_fold_cloth_twice_50hz_with_variance"
 
 
 def main():
     # Create the robot configuration & robot
     camera_config = {"front": OpenCVCameraConfig(index_or_path=0, width=640, height=480, fps=FPS)}
     robot_config = SO100FollowerConfig(
-        port="/dev/tty.usbmodem5A460814411",
+        port="/dev/ttyACM1",
         id="my_awesome_follower_arm",
         cameras=camera_config,
         use_degrees=True,
@@ -69,7 +69,7 @@ def main():
 
     # NOTE: It is highly recommended to use the urdf in the SO-ARM100 repo: https://github.com/TheRobotStudio/SO-ARM100/blob/main/Simulation/SO101/so101_new_calib.urdf
     kinematics_solver = RobotKinematics(
-        urdf_path="./SO101/so101_new_calib.urdf",
+        urdf_path="examples/so100_to_so100_EE/SO101/so101_new_calib.urdf/robot.urdf",
         target_frame_name="gripper_frame_link",
         joint_names=list(robot.bus.motors.keys()),
     )

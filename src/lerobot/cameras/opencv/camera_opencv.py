@@ -434,11 +434,15 @@ class OpenCVCamera(Camera):
         2. Stores result in latest_frame and updates timestamp (thread-safe)
         3. Sets new_frame_event to notify listeners
 
-        Stops on DeviceNotConnectedError, logs other errors and continues.
+        If consecutive read failures exceed a threshold, attempts to reconnect
+        the camera hardware up to `max_reconnect_attempts` times before giving up.
+        Stops on DeviceNotConnectedError.
         """
         if self.stop_event is None:
             raise RuntimeError(f"{self}: stop_event is not initialized before starting read loop.")
 
+        max_reconnect_attempts = self.config.max_reconnect_attempts
+        reconnect_count = 0
         failure_count = 0
         while not self.stop_event.is_set():
             try:
@@ -451,15 +455,56 @@ class OpenCVCamera(Camera):
                     self.latest_timestamp = capture_time
                 self.new_frame_event.set()
                 failure_count = 0
+                reconnect_count = 0  # Reset reconnect count on successful read
 
             except DeviceNotConnectedError:
                 break
             except Exception as e:
+                failure_count += 1
                 if failure_count <= 10:
-                    failure_count += 1
                     logger.warning(f"Error reading frame in background thread for {self}: {e}")
                 else:
-                    raise RuntimeError(f"{self} exceeded maximum consecutive read failures.") from e
+                    # Consecutive failures exceeded — attempt reconnect
+                    if reconnect_count >= max_reconnect_attempts:
+                        raise RuntimeError(
+                            f"{self} exceeded maximum consecutive read failures after "
+                            f"{max_reconnect_attempts} reconnect attempts."
+                        ) from e
+
+                    reconnect_count += 1
+                    logger.warning(
+                        f"{self} hit {failure_count} consecutive read failures. "
+                        f"Attempting reconnect ({reconnect_count}/{max_reconnect_attempts})..."
+                    )
+                    failure_count = 0
+
+                    try:
+                        self._reconnect_hardware()
+                        logger.info(f"{self} reconnected successfully (attempt {reconnect_count}/{max_reconnect_attempts}).")
+                    except Exception as reconnect_err:
+                        logger.warning(f"{self} reconnect attempt {reconnect_count} failed: {reconnect_err}")
+                        # Wait before next attempt to let the USB device settle
+                        self.stop_event.wait(timeout=2.0)
+
+    def _reconnect_hardware(self) -> None:
+        """Releases and re-opens the camera hardware (called from the read thread)."""
+        if self.videocapture is not None:
+            try:
+                self.videocapture.release()
+            except Exception:
+                pass
+            self.videocapture = None
+
+        # Brief pause for the USB device to settle
+        time.sleep(1.0)
+
+        self.videocapture = cv2.VideoCapture(self.index_or_path, self.backend)
+        if not self.videocapture.isOpened():
+            self.videocapture.release()
+            self.videocapture = None
+            raise ConnectionError(f"Failed to re-open {self} during reconnect.")
+
+        self._configure_capture_settings()
 
     def _start_read_thread(self) -> None:
         """Starts or restarts the background read thread if it's not running."""

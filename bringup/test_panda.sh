@@ -3,7 +3,8 @@ rm -rf inference_outputs
 
 # --- Project Configuration ---
 OUTPUT_ROOT="/home/maksimgorki/lerobot/inference_outputs"
-POLICY_PATH="/home/maksimgorki/lerobot/outputs/train/franka_panda/07-14-15_act/checkpoints/150000/pretrained_model"
+POLICY_PATH="/home/maksimgorki/lerobot/outputs/train/franka_panda/07-14-15_act/checkpoints/150000/pretrained_model" # delta pose
+# POLICY_PATH="/home/maksimgorki/lerobot/outputs/train/franka_panda/22-15-18_act/checkpoints/150000/pretrained_model"   # delta joint
 DATASET_REPO="maksimgorki/eval_panda"
 TASK_NAME="test_franka_panda"
 
@@ -24,10 +25,6 @@ fi
 
 # TODO: adjust display_data to visualize franka observations and actions
 
-# NOTE: The below policy settings are omitted because they make the control 
-# loop a lot slower. Image update rates drop from 10 hz to 2-3 hz.
-# --policy.temporal_ensemble_coeff=0.01 
-# --policy.n_action_steps=1 
 
 lerobot-record \
   --robot.type=franka_panda \
@@ -40,4 +37,6 @@ lerobot-record \
   --dataset.fps=${FPS} \
   --policy.path="${POLICY_PATH}" \
   --policy.device=cuda \
-  --dataset.episode_time_s=60
+  --dataset.episode_time_s=60 \
+  --policy.temporal_ensemble_coeff=0.01 \
+  --policy.n_action_steps=1 

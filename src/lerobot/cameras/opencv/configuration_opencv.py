@@ -56,6 +56,8 @@ class OpenCVCameraConfig(CameraConfig):
         - Only 3-channel color output (RGB/BGR) is currently supported.
         - FOURCC codes must be 4-character strings (e.g., "MJPG", "YUYV"). Some common FOUCC codes: https://learn.microsoft.com/en-us/windows/win32/medfound/video-fourccs#fourcc-constants
         - Setting FOURCC can help achieve higher frame rates on some cameras.
+        - max_reconnect_attempts controls how many times the camera will try to
+          reconnect after consecutive read failures before giving up.
     """
 
     index_or_path: int | Path
@@ -64,6 +66,7 @@ class OpenCVCameraConfig(CameraConfig):
     warmup_s: int = 1
     fourcc: str | None = None
     backend: Cv2Backends = Cv2Backends.ANY
+    max_reconnect_attempts: int = 5
 
     def __post_init__(self) -> None:
         self.color_mode = ColorMode(self.color_mode)

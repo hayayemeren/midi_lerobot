@@ -2,6 +2,18 @@
   <img alt="LeRobot, Hugging Face Robotics Library" src="./media/readme/lerobot-logo-thumbnail.png" width="100%">
 </p>
 
+> [!IMPORTANT]
+> ### 🧦 SO-100 Single Leader & Follower Setup ("Tidy Up The Socks")
+> This repository is pre-configured for **1 Leader Arm**, **1 Follower Arm**, and **1 USB Camera** for the **Tidy Up The Socks** task.
+> - **Full Documentation & Step-by-Step Guide:** [HOW_TO_USE_SO100_SOCKS.md](HOW_TO_USE_SO100_SOCKS.md)
+> - **Hardware Diagnostic:** `python bringup/test_hardware.py`
+> - **Live Teleoperation:** `bash bringup/teleoperation.sh`
+> - **Record Dataset:** `bash bringup/data_collection.sh`
+> - **Train ACT Policy:** `bash bringup/train_act.sh`
+> - **Autonomous Evaluation:** `bash bringup/evaluate_policy.sh`
+
+
+
 <div align="center">
 
 [![Tests](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml?query=branch%3Amain)
