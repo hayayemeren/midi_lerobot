@@ -101,7 +101,37 @@ When you plug in your two USB cameras:
 
 ---
 
-## 4. Step-by-Step Workflow
+## 4. Live Camera Viewing & Adjusting Focus
+
+Most USB cameras used in the SO-100 setup (like the Sonix USB2.0 module) have an **adjustable manual focus lens** with a threaded M12 barrel. There is no software autofocus motor, so focus must be set physically by hand.
+
+### Step 1: Start the Live Web Streamer
+On the robot computer:
+```bash
+bash bringup/view_camera.sh
+# Or specify a custom port:
+python bringup/view_camera.py --port 8080
+```
+
+### Step 2: Open the Stream in Your Browser
+On your phone, laptop, or desktop on the same network, open:
+👉 **`http://144.122.245.137:8080`** (or `http://localhost:8080` if running a browser on the robot PC)
+
+You will see:
+- Real-time video from the **Wrist Camera** and **Scene Camera**.
+- A live **Focus Sharpness Score** (`cv2.Laplacian` variance) at the top of each video feed.
+
+### Step 3: Physically Rotate the Camera Lens
+1. While watching the video stream on your screen, gently grasp the outer knurled ring / barrel of the camera lens with your fingers.
+2. Slowly rotate it clockwise or counter-clockwise:
+   - If the image becomes more blurry and the **Focus Score drops**, rotate the other way.
+   - As the image sharpens, the **Focus Score will jump up** (from ~20 up to 150–500+).
+3. Place a sock on the table where the robot will grasp it. Stop twisting when the sock's texture is crisp and the Focus Score reaches its maximum peak!
+4. *(Optional)* If the lens does not turn or feels locked, check if there is a tiny set-screw on the side of the plastic lens mount and loosen it half a turn with a precision screwdriver.
+
+---
+
+## 5. Step-by-Step Workflow
 
 ### Step 1: Activate Environment
 ```bash
@@ -203,7 +233,7 @@ The follower robot will stream frames from both the wrist and scene cameras and 
 
 ---
 
-## 5. Arm Calibration Guide (Hugging Face LeRobot Method)
+## 6. Arm Calibration Guide (Hugging Face LeRobot Method)
 
 Calibration ensures that both the Leader arm and the Follower arm share the exact same physical reference coordinate system and joint angle values. This is critical for imitation learning so demonstrations collected by the leader map 1-to-1 to the follower.
 
@@ -294,7 +324,7 @@ lerobot-calibrate --robot.type=so100_follower --robot.id=so100_follower --robot.
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 - **"Could not open camera /dev/video0":**
   1. Plug in your USB cameras.
