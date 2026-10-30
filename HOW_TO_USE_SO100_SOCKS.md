@@ -203,23 +203,94 @@ The follower robot will stream frames from both the wrist and scene cameras and 
 
 ---
 
-## 5. Recalibration (If Ever Needed)
+## 5. Arm Calibration Guide (Hugging Face LeRobot Method)
 
-If an arm is mechanically adjusted or rebuilt, recalibrate using:
+Calibration ensures that both the Leader arm and the Follower arm share the exact same physical reference coordinate system and joint angle values. This is critical for imitation learning so demonstrations collected by the leader map 1-to-1 to the follower.
 
-- **Calibrate Leader Arm:**
-  ```bash
-  bash bringup/calibrate_leader.sh
-  ```
-- **Calibrate Follower Arm:**
-  ```bash
-  bash bringup/calibrate_follower.sh
-  ```
+### How LeRobot Calibration Works (2 Steps)
 
-Follow the prompts on screen:
-1. Move the arm to the center / resting position and press Enter.
-2. Move each joint through its full range of motion.
-The scripts will automatically update the calibration files in `calibration/`.
+Hugging Face LeRobot calibrates Feetech STS3215 servos in two distinct steps:
+1. **Half-Turn Homing Offset (Center Pose):**
+   - You place the arm in the middle of its workspace.
+   - LeRobot reads the current raw 12-bit encoder position (`0` to `4095`) and calculates a `Homing_Offset` so that this resting pose corresponds exactly to the center midpoint (`2047`).
+2. **Range of Motion Limits (Min & Max):**
+   - You gently move each joint through its physical end stops.
+   - LeRobot records the minimum and maximum encoder positions and writes them to the servo EEPROM registers (`Min_Position_Limit` and `Max_Position_Limit`).
+   - *(Note: Motor 5 `wrist_roll` is a 360° continuous rotation joint and is automatically assigned `[0, 4095]` without manual recording).*
+
+---
+
+### Running the Calibration Script
+
+You can calibrate either arm interactively or with direct flags:
+
+#### Option A: Interactive Menu
+```bash
+python bringup/calibrate_arm.py
+# Or:
+bash bringup/calibrate.sh
+```
+Choose:
+- `[1]` Leader Arm
+- `[2]` Follower Arm
+- `[3]` Both Arms
+
+#### Option B: Direct Shell Shortcuts
+```bash
+# Calibrate Leader Arm
+bash bringup/calibrate_leader.sh
+
+# Calibrate Follower Arm
+bash bringup/calibrate_follower.sh
+```
+
+*(You can also run Hugging Face's raw CLI directly if preferred:)*
+```bash
+lerobot-calibrate --teleop.type=so100_leader --teleop.id=so100_leader --teleop.port=/dev/ttyACM1
+lerobot-calibrate --robot.type=so100_follower --robot.id=so100_follower --robot.port=/dev/ttyACM0
+```
+
+---
+
+### Step-by-Step Calibration Walkthrough
+
+1. **Activate Conda Environment:**
+   ```bash
+   conda activate lerobot
+   cd ~/lerobot
+   ```
+
+2. **Step 1 - Center Pose (Midpoint):**
+   The script disables motor torque so you can move the arm freely. Place all joints in their neutral midpoint:
+   - **Shoulder Pan:** Centered pointing directly forward (0°).
+   - **Shoulder Lift:** Neutral upright position (~45° to 90°).
+   - **Elbow Flex:** Bent at a 90° angle.
+   - **Wrist Flex:** Centered straight in line with forearm.
+   - **Wrist Roll:** Neutral / unrotated.
+   - **Gripper:** Half-way open (~50%).
+   - Press **`Enter`** in the terminal to lock in the midpoint homing offsets.
+
+3. **Step 2 - Range of Motion:**
+   A live encoder table will begin streaming on your screen. Slowly and gently move each joint to its physical limits:
+   - Rotate **Shoulder Pan** fully to the left, then fully to the right.
+   - Move **Shoulder Lift** fully back, then forward.
+   - Move **Elbow Flex** fully in, then fully outstretched.
+   - Move **Wrist Flex** fully up, then fully down.
+   - Squeeze the **Gripper** completely closed, then pull it completely open.
+   - Press **`Enter`** once all joints have reached their physical limits.
+
+4. **Step 3 - Automatic Programming & Backup:**
+   The script will:
+   - Program the new limits directly into the servo EEPROM.
+   - Save the calibration to `~/.cache/huggingface/lerobot/calibration/`.
+   - Automatically back up the JSON file to `calibration/so100_leader.json` (or `so100_follower.json`) in the repository.
+   - Display a summary table showing min, max, and degrees range for every joint.
+
+5. **Verify Calibration:**
+   Run the teleoperation script to verify smooth 1-to-1 mirroring:
+   ```bash
+   bash bringup/teleoperation.sh
+   ```
 
 ---
 
