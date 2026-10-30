@@ -1,39 +1,23 @@
 #!/bin/bash
 set -e
 
-POLICY_PATH="${1:-outputs/train/tidy_socks_act/checkpoints/last/pretrained_model}"
-EVAL_REPO="${2:-hayayemeren/eval_tidy_socks}"
-EPISODE_TIME_S=${EPISODE_TIME_S:-60}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-FOLLOWER_PORT="/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084008-if00"
-[ ! -e "${FOLLOWER_PORT}" ] && FOLLOWER_PORT="/dev/ttyACM0"
+# Load configuration from bringup/config.json
+eval "$(python3 "${SCRIPT_DIR}/config_helper.py" --export-env)"
 
-CAM_PATH="/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB2.0_CAM1_USB2.0_CAM1-video-index0"
-[ ! -e "${CAM_PATH}" ] && CAM_PATH="/dev/video0"
-
-CAM_NAME="camera"
-FPS=30
-
-CAM_JSON=$(cat <<EOC
-{
-  "${CAM_NAME}": {
-    "type": "opencv",
-    "index_or_path": "${CAM_PATH}",
-    "width": 640,
-    "height": 480,
-    "fps": ${FPS},
-    "fourcc": "MJPG"
-  }
-}
-EOC
-)
+POLICY_PATH="${1:-$POLICY_PATH}"
+EVAL_REPO="${2:-$EVAL_REPO_ID}"
+EPISODE_TIME_S="${EPISODE_TIME_S:-$EPISODE_TIME_S}"
 
 echo "=========================================================="
 echo " Running Autonomous Policy Evaluation on Follower Arm"
+echo " Configuration: ${SCRIPT_DIR}/config.json"
 echo " Policy Path:   ${POLICY_PATH}"
 echo " Follower Port: ${FOLLOWER_PORT}"
-echo " Camera:        ${CAM_PATH}"
+echo " Cameras JSON:  ${CAMERAS_JSON}"
 echo " Evaluation ID: ${EVAL_REPO}"
 echo "=========================================================="
 
-lerobot-record   --robot.type="so100_follower"   --robot.id="so100_follower"   --robot.port="${FOLLOWER_PORT}"   --robot.cameras="${CAM_JSON}"   --policy.path="${POLICY_PATH}"   --policy.device="cuda"   --policy.n_action_steps=30   --policy.use_amp=true   --dataset.repo_id="${EVAL_REPO}"   --dataset.single_task="Tidy up the socks."   --dataset.push_to_hub=false   --dataset.fps=${FPS}   --dataset.episode_time_s=${EPISODE_TIME_S}   --display_data=false
+lerobot-record   --robot.type="${FOLLOWER_TYPE}"   --robot.id="${FOLLOWER_ID}"   --robot.port="${FOLLOWER_PORT}"   --robot.cameras="${CAMERAS_JSON}"   --policy.path="${POLICY_PATH}"   --policy.device="${POLICY_DEVICE}"   --policy.n_action_steps="${POLICY_N_ACTION_STEPS}"   --policy.use_amp="${POLICY_USE_AMP}"   --dataset.repo_id="${EVAL_REPO}"   --dataset.single_task="${TASK}"   --dataset.push_to_hub=false   --dataset.fps="${FPS}"   --dataset.episode_time_s="${EPISODE_TIME_S}"   --display_data=false

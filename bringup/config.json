@@ -1,0 +1,63 @@
+{
+  "_comment": "LeRobot SO-100 Hardware & Task Configuration. Edit ports and camera settings here.",
+  "leader": {
+    "type": "so100_leader",
+    "id": "so100_leader",
+    "port": "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084621-if00",
+    "fallback_port": "/dev/ttyACM1",
+    "use_degrees": true
+  },
+  "follower": {
+    "type": "so100_follower",
+    "id": "so100_follower",
+    "port": "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084008-if00",
+    "fallback_port": "/dev/ttyACM0",
+    "use_degrees": true
+  },
+  "cameras": {
+    "wrist": {
+      "enabled": true,
+      "type": "opencv",
+      "index_or_path": "/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB2.0_CAM1_USB2.0_CAM1-video-index0",
+      "fallback_path": "/dev/video0",
+      "width": 640,
+      "height": 480,
+      "fps": 30,
+      "fourcc": "MJPG"
+    },
+    "scene": {
+      "enabled": true,
+      "type": "opencv",
+      "index_or_path": "/dev/video2",
+      "fallback_path": "/dev/video2",
+      "width": 640,
+      "height": 480,
+      "fps": 30,
+      "fourcc": "MJPG"
+    }
+  },
+  "dataset": {
+    "repo_id": "hayayemeren/tidy_socks",
+    "task": "Tidy up the socks.",
+    "num_episodes": 50,
+    "episode_time_s": 60,
+    "reset_time_s": 15,
+    "fps": 30,
+    "push_to_hub": false
+  },
+  "policy": {
+    "path": "outputs/train/tidy_socks_act/checkpoints/last/pretrained_model",
+    "eval_repo_id": "hayayemeren/eval_tidy_socks",
+    "n_action_steps": 30,
+    "use_amp": true,
+    "device": "cuda"
+  },
+  "training": {
+    "output_dir_act": "outputs/train/tidy_socks_act",
+    "output_dir_diffusion": "outputs/train/tidy_socks_diffusion",
+    "batch_size_act": 8,
+    "batch_size_diffusion": 16,
+    "steps": 100000,
+    "device": "cuda"
+  }
+}

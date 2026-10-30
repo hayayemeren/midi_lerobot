@@ -3,12 +3,14 @@
 </p>
 
 > [!IMPORTANT]
-> ### 🧦 SO-100 Single Leader & Follower Setup ("Tidy Up The Socks")
-> This repository is pre-configured for **1 Leader Arm**, **1 Follower Arm**, and **1 USB Camera** for the **Tidy Up The Socks** task.
+> ### 🧦 SO-100 Setup: 1 Leader + 1 Follower + 2 Cameras ("Tidy Up The Socks")
+> This repository is pre-configured for **1 Leader Arm**, **1 Follower Arm**, and **2 Cameras (Wrist + Scene)** for the **Tidy Up The Socks** task.
+> - **Central Configuration File:** [`bringup/config.json`](bringup/config.json) (Change ports & cameras here!)
 > - **Full Documentation & Step-by-Step Guide:** [HOW_TO_USE_SO100_SOCKS.md](HOW_TO_USE_SO100_SOCKS.md)
+> - **Detect & Preview Cameras:** `python bringup/find_cameras.py`
 > - **Hardware Diagnostic:** `python bringup/test_hardware.py`
 > - **Live Teleoperation:** `bash bringup/teleoperation.sh`
-> - **Record Dataset:** `bash bringup/data_collection.sh`
+> - **Record Dataset (Wrist + Scene):** `bash bringup/data_collection.sh`
 > - **Train ACT Policy:** `bash bringup/train_act.sh`
 > - **Autonomous Evaluation:** `bash bringup/evaluate_policy.sh`
 

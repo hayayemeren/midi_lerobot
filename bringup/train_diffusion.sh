@@ -1,13 +1,17 @@
 #!/bin/bash
 set -e
 
-DATASET_REPO="${1:-hayayemeren/tidy_socks}"
-OUTPUT_DIR="outputs/train/tidy_socks_diffusion"
-BATCH_SIZE=${BATCH_SIZE:-16}
-STEPS=${STEPS:-100000}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+eval "$(python3 "${SCRIPT_DIR}/config_helper.py" --export-env)"
+
+DATASET_REPO="${1:-$DATASET_REPO_ID}"
+OUTPUT_DIR="${OUTPUT_DIR:-outputs/train/tidy_socks_diffusion}"
+BATCH_SIZE="${BATCH_SIZE:-16}"
+STEPS="${STEPS:-100000}"
 
 echo "=========================================================="
-echo " Training Diffusion Policy: Tidy Up The Socks"
+echo " Training Diffusion Policy: Tidy Up The Socks (Wrist + Scene)"
+echo " Configuration: ${SCRIPT_DIR}/config.json"
 echo " Dataset:    ${DATASET_REPO}"
 echo " Output Dir: ${OUTPUT_DIR}"
 echo " Batch Size: ${BATCH_SIZE}"
