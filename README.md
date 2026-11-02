@@ -1,155 +1,226 @@
-<p align="center">
-  <img alt="LeRobot, Hugging Face Robotics Library" src="./media/readme/lerobot-logo-thumbnail.png" width="100%">
-</p>
+# 🧦 SO-100 Robot Learning: Tidy Up The Socks
 
-> [!IMPORTANT]
-> ### 🧦 SO-100 Setup: 1 Leader + 1 Follower + 2 Cameras ("Tidy Up The Socks")
-> This repository is pre-configured for **1 Leader Arm**, **1 Follower Arm**, and **2 Cameras (Wrist + Scene)** for the **Tidy Up The Socks** task.
-> - **Central Configuration File:** [`bringup/config.json`](bringup/config.json) (Change ports & cameras here!)
-> - **Full Documentation & Step-by-Step Guide:** [HOW_TO_USE_SO100_SOCKS.md](HOW_TO_USE_SO100_SOCKS.md)
-> - **Detect & Preview Cameras:** `python bringup/find_cameras.py`
-> - **Hardware Diagnostic:** `python bringup/test_hardware.py`
-> - **Live Teleoperation:** `bash bringup/teleoperation.sh`
-> - **Record Dataset (Wrist + Scene):** `bash bringup/data_collection.sh`
-> - **Train ACT Policy:** `bash bringup/train_act.sh`
-> - **Autonomous Evaluation:** `bash bringup/evaluate_policy.sh`
+An end-to-end physical AI and imitation learning robotics project built on top of [Hugging Face LeRobot](https://github.com/huggingface/lerobot). This repository is custom-configured for an **SO-100 6-DOF dual-arm setup (1 Leader + 1 Follower)** equipped with **synchronized multi-camera vision (Wrist + Scene)** to learn the autonomous manipulation task: **"Tidy Up The Socks"**.
 
+---
 
+## 📌 Project Overview & System Setup
 
-<div align="center">
+The goal of this project is to collect human teleoperation demonstrations and train deep imitation learning policies (such as **ACT** and **Diffusion Policy**) so that the robot can autonomously identify, grasp, and tidy socks into a target container.
 
-[![Tests](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/huggingface/lerobot/actions/workflows/nightly.yml?query=branch%3Amain)
-[![Python versions](https://img.shields.io/pypi/pyversions/lerobot)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/huggingface/lerobot/blob/main/LICENSE)
-[![Status](https://img.shields.io/pypi/status/lerobot)](https://pypi.org/project/lerobot/)
-[![Version](https://img.shields.io/pypi/v/lerobot)](https://pypi.org/project/lerobot/)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.1-ff69b4.svg)](https://github.com/huggingface/lerobot/blob/main/CODE_OF_CONDUCT.md)
-[![Discord](https://img.shields.io/badge/Discord-Join_Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/q8Dzzpym3f)
+### 🤖 Hardware Architecture
 
-</div>
+| Component | Default Port | Persistent Link | Description |
+| :--- | :--- | :--- | :--- |
+| **Leader Arm** | `/dev/ttyACM1` | `/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084621-if00` | Passive teleoperator arm manipulated by human demonstrator |
+| **Follower Arm** | `/dev/ttyACM0` | `/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084008-if00` | Powered 6-DOF robot arm with Feetech STS3215 servos |
+| **Wrist Camera** | `/dev/video0` | `/dev/v4l/by-id/...` | End-effector closeup view mounted directly on the gripper |
+| **Scene Camera** | `/dev/video2` | `/dev/v4l/by-id/...` | Static overhead / overview perspective of the entire table |
 
-**LeRobot** aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry so that everyone can contribute to and benefit from shared datasets and pretrained models.
+---
 
-🤗 A hardware-agnostic, Python-native interface that standardizes control across diverse platforms, from low-cost arms (SO-100) to humanoids.
+## 🛠️ What We Did in This Project
 
-🤗 A standardized, scalable LeRobotDataset format (Parquet + MP4 or images) hosted on the Hugging Face Hub, enabling efficient storage, streaming and visualization of massive robotic datasets.
+We extended and hardened the baseline LeRobot system for real-world SO-100 deployment:
 
-🤗 State-of-the-art policies that have been shown to transfer to the real-world ready for training and deployment.
+1. **Centralized Configuration System (`bringup/config.json`):**
+   - Created a single, unified JSON configuration file controlling all hardware ports, camera device paths, dataset metadata, and training parameters.
+   - Built `bringup/config_helper.py` to dynamically resolve persistent `/dev/serial/by-id/` links, eliminating port swapping bugs.
 
-🤗 Comprehensive support for the open-source ecosystem to democratize physical AI.
+2. **Synchronized Multi-Camera Vision (Wrist + Scene):**
+   - Configured dual-stream camera capture (`observation.images.wrist` and `observation.images.scene`) at 30 FPS.
+   - Created `bringup/find_cameras.py` to auto-detect video devices, inspect resolutions, and save preview snapshots.
 
-## Quick Start
+3. **Live Camera Web Streamer & Focus Tool (`bringup/view_camera.py`):**
+   - Developed a lightweight HTTP MJPEG stream server with dynamic network IP detection.
+   - Integrated a real-time **Laplacian Focus Sharpness Score** allowing easy physical adjustment of M12 manual-focus camera lenses via a browser on any phone or laptop.
 
-LeRobot can be installed directly from PyPI.
+4. **Guided Interactive Calibration Assistant (`bringup/calibrate_arm.py`):**
+   - Designed a guided assistant implementing LeRobot's official 2-step calibration (half-turn midpoint homing + physical range-of-motion discovery).
+   - Automatically programs servo EEPROM registers and backs up calibration JSON profiles to `calibration/`.
 
+5. **Driver Hardening & Robustness Fixes (`src/`):**
+   - Added automatic serial retries (`num_retry=5`) in `motors_bus.py`, `so_follower.py`, and `so_leader.py` to prevent communication dropouts during long recording sessions.
+   - Enhanced camera error-handling and reconnect routines in `camera_opencv.py`.
+   - Fixed tensor detachment for Rerun visualization in `visualization_utils.py`.
+
+6. **Automated End-to-End Bringup Pipeline:**
+   - Complete suite of reproducible scripts for diagnostic checks, interactive teleoperation, recording with keyboard redo/fast-forward controls, policy training, and autonomous evaluation.
+
+---
+
+## 📂 Repository Structure
+
+```text
+├── bringup/
+│   ├── config.json             # Central configuration (ports, cameras, dataset, policy)
+│   ├── config_helper.py        # Config parser & bash environment exporter
+│   ├── test_hardware.py        # Diagnostic script checking arms, servos & cameras
+│   ├── find_cameras.py         # Auto-detection utility for USB video devices
+│   ├── view_camera.py          # Web streaming server with real-time focus sharpness HUD
+│   ├── view_camera.sh          # Quick launch script for camera viewer
+│   ├── calibrate_arm.py        # Interactive guided calibration assistant
+│   ├── calibrate.sh            # Calibration wrapper script
+│   ├── calibrate_leader.sh     # Shortcut to calibrate leader arm
+│   ├── calibrate_follower.sh   # Shortcut to calibrate follower arm
+│   ├── teleoperation.sh        # Live teleoperation (mirroring) script
+│   ├── quick_teleop_test.py    # 10-second mirroring verification test
+│   ├── data_collection.sh      # Dual-camera dataset recording pipeline
+│   ├── visualize_dataset.sh    # Replay demonstrations in Rerun visualizer
+│   ├── train_act.sh            # Train Action Chunking with Transformers (ACT)
+│   ├── train_diffusion.sh      # Train Diffusion Policy
+│   └── evaluate_policy.sh      # Autonomous evaluation on the follower arm
+├── calibration/                # Tracked JSON calibration profiles for leader & follower
+├── src/lerobot/                # Core LeRobot library with driver improvements
+└── HOW_TO_USE_SO100_SOCKS.md   # Extended step-by-step operating manual
+```
+
+---
+
+## 🚀 How to Use the Codes
+
+### 1. Environment & Permissions
+Activate the Conda environment and verify serial / video group permissions:
 ```bash
-pip install lerobot
-lerobot-info
+conda activate lerobot
+cd ~/lerobot
+
+# Ensure dialout and video permissions (if not already added)
+sudo usermod -aG dialout,video $USER
 ```
 
-> [!IMPORTANT]
-> For detailed installation guide, please see the [Installation Documentation](https://huggingface.co/docs/lerobot/installation).
+---
 
-## Robots & Control
-
-<div align="center">
-  <img src="./media/readme/robots_control_video.webp" width="640px" alt="Reachy 2 Demo">
-</div>
-
-LeRobot provides a unified `Robot` class interface that decouples control logic from hardware specifics. It supports a wide range of robots and teleoperation devices.
-
-```python
-from lerobot.robots.myrobot import MyRobot
-
-# Connect to a robot
-robot = MyRobot(config=...)
-robot.connect()
-
-# Read observation and send action
-obs = robot.get_observation()
-action = model.select_action(obs)
-robot.send_action(action)
+### 2. Configure Hardware (`bringup/config.json`)
+Edit [`bringup/config.json`](bringup/config.json) if you need to adjust ports, camera paths, or dataset parameters:
+```json
+{
+  "leader": {
+    "port": "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084621-if00",
+    "fallback_port": "/dev/ttyACM1"
+  },
+  "follower": {
+    "port": "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5AE6084008-if00",
+    "fallback_port": "/dev/ttyACM0"
+  },
+  "cameras": {
+    "wrist": {
+      "enabled": true,
+      "index_or_path": "/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB2.0_CAM1_USB2.0_CAM1-video-index0",
+      "fallback_path": "/dev/video0"
+    },
+    "scene": {
+      "enabled": true,
+      "index_or_path": "/dev/video2",
+      "fallback_path": "/dev/video2"
+    }
+  }
+}
 ```
 
-**Supported Hardware:** SO100, LeKiwi, Koch, HopeJR, OMX, EarthRover, Reachy2, Gamepads, Keyboards, Phones, OpenARM, Unitree G1.
+---
 
-While these devices are natively integrated into the LeRobot codebase, the library is designed to be extensible. You can easily implement the Robot interface to utilize LeRobot's data collection, training, and visualization tools for your own custom robot.
-
-For detailed hardware setup guides, see the [Hardware Documentation](https://huggingface.co/docs/lerobot/integrate_hardware).
-
-## LeRobot Dataset
-
-To solve the data fragmentation problem in robotics, we utilize the **LeRobotDataset** format.
-
-- **Structure:** Synchronized MP4 videos (or images) for vision and Parquet files for state/action data.
-- **HF Hub Integration:** Explore thousands of robotics datasets on the [Hugging Face Hub](https://huggingface.co/lerobot).
-- **Tools:** Seamlessly delete episodes, split by indices/fractions, add/remove features, and merge multiple datasets.
-
-```python
-from lerobot.datasets.lerobot_dataset import LeRobotDataset
-
-# Load a dataset from the Hub
-dataset = LeRobotDataset("lerobot/aloha_mobile_cabinet")
-
-# Access data (automatically handles video decoding)
-episode_index=0
-print(f"{dataset[episode_index]['action'].shape=}\n")
-```
-
-Learn more about it in the [LeRobotDataset Documentation](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)
-
-## SoTA Models
-
-LeRobot implements state-of-the-art policies in pure PyTorch, covering Imitation Learning, Reinforcement Learning, and Vision-Language-Action (VLA) models, with more coming soon. It also provides you with the tools to instrument and inspect your training process.
-
-<p align="center">
-  <img alt="Gr00t Architecture" src="./media/readme/VLA_architecture.jpg" width="640px">
-</p>
-
-Training a policy is as simple as running a script configuration:
-
+### 3. Check & Adjust Camera Focus
+Most robot camera modules have a **manual focus ring**. To view the live video and adjust focus:
 ```bash
-lerobot-train \
-  --policy=act \
-  --dataset.repo_id=lerobot/aloha_mobile_cabinet
+bash bringup/view_camera.sh
 ```
+1. Open the URL shown in your terminal (e.g., `http://<YOUR_ROBOT_IP>:8080`) in a browser on your phone or laptop.
+2. Slowly twist the physical lens barrel on the camera.
+3. Watch the live **Focus Sharpness Score** HUD on screen — stop when the score hits its peak and the socks are crisp.
+4. Press `Ctrl+C` to stop the viewer.
 
-| Category                   | Models                                                                                                                                                                                                       |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Imitation Learning**     | [ACT](./docs/source/policy_act_README.md), [Diffusion](./docs/source/policy_diffusion_README.md), [VQ-BeT](./docs/source/policy_vqbet_README.md)                                                             |
-| **Reinforcement Learning** | [HIL-SERL](./docs/source/hilserl.mdx), [TDMPC](./docs/source/policy_tdmpc_README.md) & QC-FQL (coming soon)                                                                                                  |
-| **VLAs Models**            | [Pi0Fast](./docs/source/pi0fast.mdx), [Pi0.5](./docs/source/pi05.mdx), [GR00T N1.5](./docs/source/policy_groot_README.md), [SmolVLA](./docs/source/policy_smolvla_README.md), [XVLA](./docs/source/xvla.mdx) |
+---
 
-Similarly to the hardware, you can easily implement your own policy & leverage LeRobot's data collection, training, and visualization tools, and share your model to the HF Hub
-
-For detailed policy setup guides, see the [Policy Documentation](https://huggingface.co/docs/lerobot/bring_your_own_policies).
-
-## Inference & Evaluation
-
-Evaluate your policies in simulation or on real hardware using the unified evaluation script. LeRobot supports standard benchmarks like **LIBERO**, **MetaWorld** and more to come.
-
+### 4. Run Hardware Diagnostic
+Verify that both arms and both cameras communicate cleanly:
 ```bash
-# Evaluate a policy on the LIBERO benchmark
-lerobot-eval \
-  --policy.path=lerobot/pi0_libero_finetuned \
-  --env.type=libero \
-  --env.task=libero_object \
-  --eval.n_episodes=10
+python bringup/test_hardware.py
+```
+*Expected: `[OK]` for Leader, Follower, Wrist Camera, and Scene Camera.*
+
+---
+
+### 5. Calibrate the Arms (If Rebuilt or Adjusted)
+If servo horns or mounts have been moved, run the calibration assistant:
+```bash
+python bringup/calibrate_arm.py
+# Or:
+bash bringup/calibrate.sh
+```
+- **Step 1:** Place the arm in the **center/neutral resting pose** and press `Enter` to set homing offsets.
+- **Step 2:** Gently move each joint through its **physical range limits** and press `Enter`.
+- The script automatically writes limits to the servo EEPROMs and saves backups in `calibration/`.
+
+---
+
+### 6. Practice Teleoperation (Mirroring)
+Before recording, test live mirroring to ensure smooth joint response:
+```bash
+bash bringup/teleoperation.sh
+```
+- Move the Leader arm by hand; the Follower arm follows in real-time.
+- Press `Ctrl+C` in the terminal to stop teleoperation.
+
+---
+
+### 7. Collect Demonstrations ("Tidy Up The Socks")
+Arrange socks on the workspace table with the target container, then start recording:
+```bash
+bash bringup/data_collection.sh
 ```
 
-Learn how to implement your own simulation environment or benchmark and distribute it from the HF Hub by following the [EnvHub Documentation](https://huggingface.co/docs/lerobot/envhub)
+#### Controls During Recording:
+- **`c` (Continue / Capture):**
+  - Press `c` to start recording an episode.
+  - Teleoperate the arm to grasp and place the sock in the basket.
+  - Press `c` again as soon as the sock is placed to end the episode early (avoids idle padding).
+- **`r` (Redo):**
+  - If you fumble, drop a sock, or make a mistake, press `r` to immediately discard the episode and re-record it.
+- **Reset period (15s):**
+  - Reposition socks with varied placements, rotations, and folds for the next episode.
+- **Stop / Resume:**
+  - Press `Ctrl+C` or type `exit` anytime. Demonstrations are safely stored in `~/.cache/huggingface/lerobot/`. Running the script again will resume seamlessly.
 
-## Resources
+---
 
-- **[Documentation](https://huggingface.co/docs/lerobot/index):** The complete guide to tutorials & API.
-- **[Chinese Tutorials: LeRobot+SO-ARM101中文教程-同济子豪兄](https://zihao-ai.feishu.cn/wiki/space/7589642043471924447)** Detailed doc for assembling, teleoperate, dataset, train, deploy. Verified by Seed Studio and 5 global hackathon players.
-- **[Discord](https://discord.gg/q8Dzzpym3f):** Join the `LeRobot` server to discuss with the community.
-- **[X](https://x.com/LeRobotHF):** Follow us on X to stay up-to-date with the latest developments.
-- **[Robot Learning Tutorial](https://huggingface.co/spaces/lerobot/robot-learning-tutorial):** A free, hands-on course to learn robot learning using LeRobot.
+### 8. Visualize Recorded Dataset
+Inspect your multi-camera recordings and joint trajectory data:
+```bash
+bash bringup/visualize_dataset.sh hayayemeren/tidy_socks 0
+```
 
-## Citation
+---
 
-If you use LeRobot in your project, please cite the GitHub repository to acknowledge the ongoing development and contributors:
+### 9. Train the Imitation Learning Policy
+
+#### Option A: Train ACT (Action Chunking with Transformers - Recommended)
+```bash
+bash bringup/train_act.sh hayayemeren/tidy_socks
+```
+- Trains on joint states and both camera perspectives (`wrist` + `scene`).
+- Checkpoints are saved under `outputs/train/tidy_socks_act/checkpoints/`.
+
+#### Option B: Train Diffusion Policy
+```bash
+bash bringup/train_diffusion.sh hayayemeren/tidy_socks
+```
+- Trains a Diffusion policy saved under `outputs/train/tidy_socks_diffusion/checkpoints/`.
+
+---
+
+### 10. Deploy Autonomous Evaluation
+Run the trained policy to control the follower arm autonomously:
+```bash
+bash bringup/evaluate_policy.sh outputs/train/tidy_socks_act/checkpoints/last/pretrained_model
+```
+The robot will stream inputs from both cameras and execute the sock tidying policy autonomously!
+
+---
+
+## 📖 Citation
+
+This project is built upon the open-source **LeRobot** library:
 
 ```bibtex
 @misc{cadene2024lerobot,
@@ -160,11 +231,6 @@ If you use LeRobot in your project, please cite the GitHub repository to acknowl
 }
 ```
 
-If you are referencing our research or the academic paper, please also cite our ICLR publication:
-
-<details>
-<summary><b>ICLR 2026 Paper</b></summary>
-
 ```bibtex
 @inproceedings{cadenelerobot,
   title={LeRobot: An Open-Source Library for End-to-End Robot Learning},
@@ -174,17 +240,3 @@ If you are referencing our research or the academic paper, please also cite our 
   url={https://arxiv.org/abs/2602.22818}
 }
 ```
-
-</details>
-
-## Contribute
-
-We welcome contributions from everyone in the community! To get started, please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide. Whether you're adding a new feature, improving documentation, or fixing a bug, your help and feedback are invaluable. We're incredibly excited about the future of open-source robotics and can't wait to work with you on what's next—thank you for your support!
-
-<p align="center">
-  <img alt="SO101 Video" src="./media/readme/so100_video.webp" width="640px">
-</p>
-
-<div align="center">
-<sub>Built by the <a href="https://huggingface.co/lerobot">LeRobot</a> team at <a href="https://huggingface.co">Hugging Face</a> with ❤️</sub>
-</div>
