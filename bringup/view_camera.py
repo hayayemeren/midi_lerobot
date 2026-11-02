@@ -237,6 +237,30 @@ class StreamHandler(BaseHTTPRequestHandler):
                 pass
         else:
             self.send_error(404, "Not Found")
+def get_ip_addresses():
+    """Automatically detects machine network IPs so the user doesn't have to hardcode them."""
+    ips = ["localhost"]
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0.5)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        if local_ip not in ips:
+            ips.append(local_ip)
+        s.close()
+    except Exception:
+        pass
+    try:
+        import subprocess
+        out = subprocess.check_output(["hostname", "-I"], text=True)
+        for ip in out.strip().split():
+            if ip not in ips:
+                ips.append(ip)
+    except Exception:
+        pass
+    return ips
+
 
 def main():
     parser = argparse.ArgumentParser(description="Live Camera Focus & Preview Server")
@@ -287,15 +311,14 @@ def main():
             t.start()
             threads.append(t)
             time.sleep(1.0)
-
     server_address = ("0.0.0.0", args.port)
     httpd = HTTPServer(server_address, StreamHandler)
     
     print("\n" + "=" * 65)
     print(f" 🚀 Web Stream Server running on port {args.port}!")
-    print(f" 👉 Open in your browser (computer or phone):")
-    print(f"    http://localhost:{args.port}")
-    print(f"    http://144.122.245.137:{args.port}")
+    print(" 👉 Open in your browser (computer or phone):")
+    for ip in get_ip_addresses():
+        print(f"    http://{ip}:{args.port}")
     print("=" * 65)
     print(" Press Ctrl+C in terminal to stop.")
     

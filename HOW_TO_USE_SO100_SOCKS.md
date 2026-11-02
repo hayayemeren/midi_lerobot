@@ -114,8 +114,8 @@ python bringup/view_camera.py --port 8080
 ```
 
 ### Step 2: Open the Stream in Your Browser
-On your phone, laptop, or desktop on the same network, open:
-👉 **`http://144.122.245.137:8080`** (or `http://localhost:8080` if running a browser on the robot PC)
+👉 **`http://144.122.209.117:8080`** (or `http://localhost:8080` if running a browser on the robot PC)
+*(Note: The script automatically prints all reachable IP addresses in the terminal upon startup)*
 
 You will see:
 - Real-time video from the **Wrist Camera** and **Scene Camera**.
